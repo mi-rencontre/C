@@ -100,7 +100,7 @@ public:
 
 	~List()
 	{
-
+		Clear();
 	}
 
 public:
@@ -159,6 +159,19 @@ public:
 	Iterator End()
 	{
 		return &_head;
+	}
+
+protected:
+
+	void Clear()
+	{
+		Iterator begin = Begin();
+		while (begin != End())
+		{
+			LinkType tmp = begin._node;
+			++begin;
+			delete tmp;
+		}
 	}
 
 private:
