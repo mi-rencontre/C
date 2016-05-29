@@ -25,6 +25,8 @@ template<class T>
 struct __ListIterator
 {
 	typedef __ListIterator<T> Iterator;
+
+	typedef ptrdiff_t Difference;
 	typedef T ValueType;
 	typedef __ListNode<T>* LinkType;
 	typedef T& Reference;
@@ -81,7 +83,6 @@ struct __ListIterator
 		_node = _node->_prev;
 		return tmp;
 	}
-
 };
 
 template<class T>

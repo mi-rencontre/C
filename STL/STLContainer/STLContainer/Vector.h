@@ -8,9 +8,13 @@ class Vector
 public:
 	typedef T ValueType;
 	typedef ValueType* Pointer;
+	typedef const ValueType* ConstPointer;
 	typedef ValueType& Reference;
+	typedef const ValueType& ConstReference;
 
 	typedef ValueType* Iterator;
+	typedef const ValueType* ConstIterator;
+
 
 public:
 	Vector()
