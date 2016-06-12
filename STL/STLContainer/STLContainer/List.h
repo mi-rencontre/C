@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Iterator.h"
+
 #include<assert.h>
 
 template<class T>
@@ -21,101 +23,174 @@ struct __ListNode
 	{}
 };
 
-template<class T>
+template<class T, class Ref, class Ptr>
 struct __ListIterator
 {
-	typedef __ListIterator<T> Iterator;
+	typedef __ListNode<T> Node;
+	typedef Node* LinkType;
 
-	typedef ptrdiff_t Difference;
+	typedef BidirectionalIteratorTag IteratorCategory;
 	typedef T ValueType;
-	typedef __ListNode<T>* LinkType;
-	typedef T& Reference;
-	typedef T* Pointer;
+	typedef Ptr Pointer; // const T*
+	typedef Ref Reference; // const T&
+	typedef ptrdiff_t DifferenceType;
 
-	LinkType _node;
+	typedef __ListIterator<T, Ref, Ptr>  Self;
 
-	__ListIterator(LinkType node = NULL)
+public:
+	__ListIterator()
+	{}
+
+	__ListIterator(LinkType node)
 		:_node(node)
 	{}
 
-	bool operator==(const Iterator& x) const
+	Self operator++()
 	{
-		return _node == x._node;
+		_node = _node->_next;
+		return *this;
 	}
 
-	bool operator!=(const Iterator& x) const
+	Self operator++(int)
 	{
-		return _node != x._node;
+		LinkType tmp(_node);
+
+		_node = _node->_next;
+		return Self(tmp);
 	}
 
-	Reference operator*() const
+	Self operator--()
+	{
+		_node = _node->_prev;
+		return *this;
+	}
+
+	Self operator--(int)
+	{
+		LinkType tmp(_node);
+
+		_node = _node->_prev;
+		return Self(tmp);
+	}
+
+	Reference operator*()
 	{
 		return _node->_data;
 	}
 
-	Pointer operator->() const
+	Pointer operator->()
 	{
-		return &(operator*());
+		return &(_node->_data);
 	}
 
-	Iterator& operator++()
+	bool operator==(Self& it)
 	{
-		_node = _node->_next;
-		return *this;
+		return _node == it._node;
 	}
 
-	Iterator operator++(int)
+	bool operator !=(Self& it)
 	{
-		Iterator tmp(_node);
-		_node = _node->_next;
-		return tmp;
+		return _node != it._node;
 	}
 
-	Iterator& operator--()
-	{
-		_node = _node->_prev;
-		return *this;
-	}
-
-	Iterator operator--(int)
-	{
-		Iterator tmp(_node);
-		_node = _node->_prev;
-		return tmp;
-	}
+	//protected:
+	LinkType _node;
 };
+
 
 template<class T>
 class List
 {
+	typedef __ListNode<T> Node;
+	typedef Node* LinkType;
 public:
-	typedef __ListIterator<T> Iterator;
-	typedef T ValueType;
-	typedef __ListNode<T>* LinkType;
+
+	typedef __ListIterator<T, T&, T*> Iterator;
+	typedef __ListIterator<T, const T&, const T*> ConstIterator;
+
+	typedef ReverseIterator<Iterator> ReverseIterator;
 
 	List()
+		:_head(new Node())
 	{
-		_head._prev = &_head;
-		_head._next = &_head;
+		_head->_next = _head;
+		_head->_prev = _head;
 	}
 
-	~List()
+	/*void PushBack(const T& x)
 	{
-		Clear();
+	LinkType tail = _head->_prev;
+	LinkType tmp = new Node(x);
+	tail->_next = tmp;
+	tmp->_prev = tail;
+	tail = tmp;
+
+	_head->_prev = tail;
+	tail->_next = _head;
+	}*/
+
+	Iterator Begin()
+	{
+		return Iterator(_head->_next);
 	}
 
-public:
-	void Insert(Iterator pos, const ValueType& x)
+	Iterator End()
 	{
-		LinkType tmp = new __ListNode<T>(x);
-		LinkType prev = pos._node->_prev;
-		LinkType cur = pos._node;
+		return Iterator(_head);
+	}
+
+	ConstIterator Begin() const
+	{
+		return ConstIterator(_head->_next);
+	}
+
+	ConstIterator End() const
+	{
+		return ConstIterator(_head);
+	}
+
+	ReverseIterator RBegin()
+	{
+		return ReverseIterator(End());
+	}
+
+	ReverseIterator REnd()
+	{
+		return ReverseIterator(Begin());
+	}
+
+	// pos前插入一个节点
+	Iterator Insert(Iterator pos, const T& x)
+	{
+		Node* cur = pos._node;
+		Node* prev = cur->_prev;
+
+		Node* tmp = new Node(x);
+		tmp->_next = cur;
+		cur->_prev = tmp;
 
 		prev->_next = tmp;
 		tmp->_prev = prev;
 
-		tmp->_next = cur;
-		cur->_prev = tmp;
+		return tmp;
+	}
+
+	//删除pos指向的结点，返回pos之后的一个结点
+	Iterator Erase(Iterator pos)
+	{
+		assert(pos != End());
+
+		Node* next = pos._node->_next;
+		Node* prev = pos._node->_prev;
+
+		Node* del = pos._node;
+
+		prev->_next = next;
+		next->_prev = prev;
+
+		delete del;
+
+		return Iterator(next);
 	}
 
 	void PushBack(const T& x)
@@ -123,68 +198,53 @@ public:
 		Insert(End(), x);
 	}
 
+	void PopBack()
+	{
+		// assert
+		Erase(--End());
+	}
+
 	void PushFront(const T& x)
 	{
 		Insert(Begin(), x);
 	}
 
-	//删除pos指向的结点，返回pos之后的一个结点
-	Iterator Erase(Iterator pos)
-	{
-		LinkType prev = pos._node->_prev;
-		LinkType next = pos._node->_next;
-
-		prev->_next = next;
-		next->_prev = prev;
-
-		delete pos._node;
-
-		return Iterator(next);
-	}
-
-	void PopBack()
-	{
-		Erase(--end());
-	}
-
 	void PopFront()
 	{
-		Erase(begin());
+		// assert
+		Erase(Begin());
 	}
 
-	Iterator Begin()
-	{
-		return _head._next;
-	}
-
-	Iterator End()
-	{
-		return &_head;
-	}
+	void Reverse();
+	void Merge(List<T>& list);
+	void Unique();
 
 protected:
-
-	void Clear()
-	{
-		Iterator begin = Begin();
-		while (begin != End())
-		{
-			LinkType tmp = begin._node;
-			++begin;
-			delete tmp;
-		}
-	}
-
-private:
-	__ListNode<T>  _head;
+	LinkType _head;
+	//Node _head;
 };
 
-void PrintList(List<int>& l)
+
+void PrintList1(List<int>& l)
 {
 	List<int>::Iterator it = l.Begin();
 	while (it != l.End())
 	{
+		*it = 10;
 		cout << *it << " ";
+
+		++it;
+	}
+	cout << endl;
+}
+
+void PrintList2(List<int>& l)
+{
+	List<int>::ReverseIterator it = l.RBegin();
+	while (it != l.REnd())
+	{
+		cout << *it << " ";
+
 		++it;
 	}
 	cout << endl;
@@ -198,6 +258,8 @@ void TestList()
 	l.PushBack(3);
 	l.PushBack(4);
 	l.PushBack(5);
-	l.PushBack(6);
-	PrintList(l);
+
+
+	//PrintList1(l);
+	PrintList2(l);
 }
