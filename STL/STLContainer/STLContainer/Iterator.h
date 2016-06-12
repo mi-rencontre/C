@@ -21,11 +21,10 @@ struct IteratorTraits
 {
 	typedef typename Iterator::IteratorCategory IteratorCategory;
 	typedef typename Iterator::ValueType ValueType;
-	typedef typename Iterator::DifferenceType Difference;
+	typedef typename Iterator::DifferenceType DifferenceType;
 	typedef typename Iterator::Pointer Pointer;
 	typedef typename Iterator::Reference Reference;
 };
-
 
 //偏特化原生指针
 template<class T>
@@ -140,3 +139,59 @@ ValueType(const Iterator&)
 {
 	return static_cast<typename IteratorTraits<Iterator>::ValueType*> (0);
 }
+
+template <class Iterator>
+class ReverseIterator
+{
+protected:
+	Iterator _current;
+public:
+	typedef typename IteratorTraits<Iterator>::IteratorCategory IteratorCategory;
+	typedef typename IteratorTraits<Iterator>::ValueType ValueType;
+	typedef typename IteratorTraits<Iterator>::DifferenceType DifferenceType;
+	typedef typename IteratorTraits<Iterator>::Pointer Pointer;
+	typedef typename IteratorTraits<Iterator>::Reference Reference;
+
+	typedef Iterator IteratorType;
+	typedef ReverseIterator<Iterator> Self;
+
+public:
+	ReverseIterator() {}
+	explicit ReverseIterator(IteratorType x) : _current(x) {}
+
+	Reference operator*() const {
+		Iterator tmp = _current;
+		return *--tmp;
+	}
+
+	Pointer operator->() const { return &(operator*()); }
+
+	Self& operator++() {
+		--_current;
+		return *this;
+	}
+	Self operator++(int) {
+		Self tmp = *this;
+		--_current;
+		return tmp;
+	}
+	Self& operator--() {
+		++_current;
+		return *this;
+	}
+	Self operator--(int) {
+		Self tmp = *this;
+		++_current;
+		return tmp;
+	}
+
+	bool operator != (Self& s)
+	{
+		return _current != s._current;
+	}
+
+	bool operator == (Self& s)
+	{
+		return _current == s._current;
+	}
+};
